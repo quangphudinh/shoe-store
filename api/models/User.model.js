@@ -16,4 +16,18 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+//validate password match
+userSchema.methods.matchPassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+}
+
+//register password hash and store
+userSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) { // kiểm tra xem mk có thay đổi k , nếu k thì next
+        next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt); // băm mk hiện tại kết hợp với salt , sau khi băm lưu lại
+});
+
 module.exports = mongoose.model("User", userSchema);
