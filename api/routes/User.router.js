@@ -3,7 +3,8 @@ const userRouter = express.Router();
 const asyncHandler = require("express-async-handler");
 
 const User = require("../models/User.model");
-const { token } = require("morgan");
+const generateToken = require("../helper/tokenGenerate");
+const protect = require("../middleware/Auth.middleware");
 
 userRouter.post('/login', asyncHandler(
     async (req, res) => {
@@ -16,7 +17,7 @@ userRouter.post('/login', asyncHandler(
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
-                token: null,
+                token: generateToken(user._id),
                 createdAt: user.createdAt
             })
         }
@@ -60,4 +61,22 @@ userRouter.post('/register', asyncHandler(
     }
 ));
 
+userRouter.get('/profile', protect , asyncHandler(
+    async (req, res) => {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                createdAt: user.createdAt
+            })
+        } else {
+            res.status(404);
+            throw new Error("USER NOT FOUND");
+        }
+    }
+))
 module.exports = userRouter;
